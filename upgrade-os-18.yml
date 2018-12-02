@@ -1,0 +1,36 @@
+---
+- hosts: WebServer
+  gather_facts: yes
+  become: yes
+
+  tasks:
+      - name: Remove the EOL message of the day if one exists.
+        file:
+          path: "{{ item }}"
+          state: absent
+        with_items:
+          - /etc/update-motd.d/99-esm
+          - /run/motd.dynamic
+
+      - name: Upgrade all packages to the latest version
+        apt: update_cache=yes upgrade=full
+
+      - name: Ensure update-manager-core is installed.
+        apt: name=update-manager-core state=present
+
+      - name: Run do-release-upgrade non-interactively.
+        command: do-release-upgrade -f DistUpgradeViewNonInteractive
+
+      # Note: In Ansible 2.7+, use the reboot module instead.
+      - name: Reboot the server.
+        command: reboot
+        async: 0
+        poll: 0
+
+      - name: Wait for server to reboot.
+        wait_for:
+          host: "{{ ansible_ssh_host }}"
+          port: 22
+          state: started
+        connection: local
+        become: no
