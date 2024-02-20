@@ -1,5 +1,5 @@
 ---
-- hosts: '{{inventory}}'
+- hosts: '{{inventory_hostname}}'
   tasks:
     - name: "Install NginX"
       apt:
